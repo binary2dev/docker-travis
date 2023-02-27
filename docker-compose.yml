@@ -1,0 +1,28 @@
+version: '3'
+services:
+  web:
+  # build . means that this directory exists in current working directory
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment: 
+      - CHOKIDAR_USEPOLLING=true # create-ui-app <= 5.x
+      - WATCHPACK_POLLING=true # create-ui-app >= 5.x
+      - FAST_REFRESH=false
+      - WDS_SOCKET_PORT=3000 # The mapped port on your host machine
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules # dont try to map folder against this directory
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+      
+    command: ["npm", "run", "test"]
+
