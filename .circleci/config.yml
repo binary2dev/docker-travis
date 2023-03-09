@@ -5,6 +5,7 @@ jobs:
       - image: docker:latest
     steps:
       - checkout
+      - setup_remote_docker
       - run:
           name: Build Docker Image
           command: docker build -t jaysun94/docker-travis -f Dockerfile.dev .
