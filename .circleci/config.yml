@@ -12,10 +12,34 @@ jobs:
       - run:
           name: Run Tests
           command: docker run -e CI=true jaysun94/docker-travis npm run test -- --coverage
+  deploy:
+    docker:
+      - image: circleci/aws-cli:latest
+    steps:
+      - checkout
+      - run:
+          name: Configure AWS Credentials
+          command: |
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/config
+            echo "aws_access_key_id=$AWS_ACCESS_KEY_ID" >> ~/.aws/config
+            echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> ~/.aws/config
+      - run:
+          name: Deploy to Elastic Beanstalk
+          command: |
+            aws configure set default.region $AWS_DEFAULT_REGION
+            aws elasticbeanstalk create-application-version --application-name $EB_APP_NAME --version-label $CIRCLE_SHA1 --source-bundle S3Bucket=$S3_BUCKET_NAME,S3Key=$S3_KEY_NAME
+            aws elasticbeanstalk update-environment --environment-name $EB_ENV_NAME --version-label $CIRCLE_SHA1
 workflows:
   build-and-test:
     jobs:
       - build:
+          filters:
+            branches:
+              only: master
+      - deploy:
+          requires:
+            - build
           filters:
             branches:
               only: master
