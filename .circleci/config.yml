@@ -11,7 +11,7 @@ jobs:
           command: docker build -t jaysun94/docker-travis -f Dockerfile.dev .
       - run:
           name: Run Tests
-          command: docker run jaysun94/docker-travis npm run test -- --coverage
+          command: docker run -e CI=true jaysun94/docker-travis npm run test -- --coverage
 workflows:
   build-and-test:
     jobs:
