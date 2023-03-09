@@ -14,22 +14,19 @@ jobs:
           command: docker run -e CI=true jaysun94/docker-travis npm run test -- --coverage
   deploy:
     docker:
-      - image: circleci/aws-cli@3.1.4
+      - image: amazon/aws-cli
     steps:
       - checkout
       - run:
           name: Configure AWS Credentials
-          command: |
-            mkdir -p ~/.aws
-            echo "[default]" > ~/.aws/config
-            echo "aws_access_key_id=$AWS_ACCESS_KEY_ID" >> ~/.aws/config
-            echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> ~/.aws/config
+          command: aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID && aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY && aws configure set default.region $AWS_DEFAULT_REGION
       - run:
-          name: Deploy to Elastic Beanstalk
+          name: Upload to Elastic Beanstalk
           command: |
-            aws configure set default.region $AWS_DEFAULT_REGION
-            aws elasticbeanstalk create-application-version --application-name $EB_APP_NAME --version-label $CIRCLE_SHA1 --source-bundle S3Bucket=$S3_BUCKET_NAME,S3Key=$S3_KEY_NAME
-            aws elasticbeanstalk update-environment --environment-name $EB_ENV_NAME --version-label $CIRCLE_SHA1
+            aws s3 cp Dockerrun.aws.json s3://$S3_BUCKET_NAME/Dockerrun.aws.json --region $AWS_DEFAULT_REGION
+            aws elasticbeanstalk create-application-version --application-name $EB_APP_NAME --version-label $CIRCLE_SHA1 --source-bundle S3Bucket=$S3_BUCKET_NAME,S3Key=Dockerrun.aws.json --region $AWS_DEFAULT_REGION
+            aws elasticbeanstalk update-environment --environment-name $EB_ENV_NAME --version-label $CIRCLE_SHA1 --region $AWS_DEFAULT_REGION
+
 workflows:
   build-and-test:
     jobs:
